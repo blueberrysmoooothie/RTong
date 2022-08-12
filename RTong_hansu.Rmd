@@ -1,0 +1,39 @@
+---
+title: "RTong"
+author: "hansu"
+date: "2022-08-12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+df <- na.omit(survey)
+str(df)
+```
+
+## 분산분석
+- 검정 통계량 : F = 집단 간 분산, 집단 내 분산 비 
+
+### 일원분산분석
+  
+- 분석전 범주별 분포 확인
+```{r}
+library(gplots)
+plotmeans(Height~Clap ,data = df,
+          barcol='tomato', barwidth=3, col='cornflowerblue', lwd=2,
+          main='Height of Students \nwith 95% CI of Mean')
+```
+```{r}
+boxplot(Height~Clap ,data = df, col = 'tomato',
+        main ='Height of Students')
+```
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
