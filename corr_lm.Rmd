@@ -1,0 +1,95 @@
+---
+title: "gunyoung"
+author: "gyc"
+date: "2022-08-12"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r}
+df<-airquality
+summary(df)
+```
+
+- 각 열의 요약 통계량과 NA의 수를 확인한 결과
+  - Ozone은 37개, Solar.R은 7개 있으므로 NA값을 모두 삭제
+
+```{r}
+df<-na.omit(airquality)
+str(df) # 모두 수치형데이터(연속형)
+class(df) # 데프
+summary(df) # NA값 사라진지 확인
+```
+
+- str()로 모든 열들이 수치형(연속형)인것을 확인
+- class()로 데이터 프레임
+- summary()로 NA 행이 삭제되었는지 확인
+
+```{r}
+library(psych)
+corr.test(df)
+```
+
+- 종속변수Ozone열과 
+- Ozone열과 Wind열과 상관계수가 -0.6
+- Ozone열과 Temp열과 상관계수가 0.7
+
+- Probability values는 유의 수준처럼 0.05보다 작으면 *통계적*으로 유의하다고 할 수 있다.
+
+## Wind와 Ozone 상관계수
+```{r}
+plot(df$Wind,df$Ozone,main='Wind와 Ozone 상관계수',
+     xlab='Wind',ylab='Ozone',col='peru',pch=19)
+```
+
+- 강한 음의 상관이 보임
+
+## Temp와 Ozone 상관계수
+```{r}
+plot(df$Temp,df$Ozone,main='Temp와 Ozone 상관계수',
+     xlab='Temp',ylab='Ozone',col='yellow1',pch=19)
+```
+
+- 강한 양의 상관이 보임
+
+# 단순회귀분석
+## 상관계수가 가장 높았던 Ozone와 Temp
+```{r}
+model<-lm(Ozone~Temp,data=df)
+plot(Ozone~Temp,data=df,col='yellowgreen',pch=19)
+abline(model,col='red',lwd=2)
+```
+
+- 
+
+# 다중회귀분석
+## 변수선택법(전진선택법)
+```{r}
+model_up<-lm(Ozone~.,data=df)
+model_lo<-lm(Ozone~1,data=df)
+model<-lm(Temp~.,data=df)
+step(model_lo,scope=list(upper=model_up),direction = 'forward')
+```
+
+## 변수선택법으로 선택된 변수의 회귀분석
+```{r}
+model_final<-lm(Ozone ~ Temp + Wind + Solar.R + Month,data=df)
+summary(model_final)
+
+plot(Ozone ~ Temp + Wind + Solar.R + Month,data=df)
+```
+
+## 상관계수로 내가 정해본 회귀분석
+- 
+
+
+
+
+
+
+
+
+
+
