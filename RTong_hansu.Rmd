@@ -15,6 +15,28 @@ str(df)
 ## 분산분석
 - 검정 통계량 : F = 집단 간 분산, 집단 내 분산 비 
 
+## 분산분석의 기본가정
+- 정규성 : 종속변수는 정규분포를 따른다.
+```{r}
+library(car)
+qqPlot(df$Height, pch = 20, col='deepskyblue', id = F,
+       main = 'Q-Q Plot')
+shapiro.test(df$Height)
+```
+  
+- 등분산성 : 각 집단의 분포는 모두 동일한 분산을 갖는다.
+```{r}
+leveneTest(Height ~ Clap, data = df)
+bartlett.test(Height ~ Clap, data = df)
+```
+
+  - 등분산 미만족 시
+  
+```{r}
+oneway.test(Height ~ Clap, data = df)
+```
+
+
 ### 일원분산분석
   
 - 분석전 범주별 분포 확인
@@ -28,12 +50,128 @@ plotmeans(Height~Clap ,data = df,
 boxplot(Height~Clap ,data = df, col = 'tomato',
         main ='Height of Students')
 ```
-## Including Plots
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
+- anova 생성
+```{r}
+st.aov<-aov(Height~Clap ,data = df,)
+st.aov
+summary(st.aov)
+```
+##### 사후분석
+- 다중비교
+각 집단평균과 전체평균의 차이
+```{r}
+model.tables(st.aov, type = 'effects')
+```
+- Tukey HSD 검정
+```{r}
+st.compare <- TukeyHSD(st.aov)
+plot(st.compare, col = 'blue')
+```
+- 범주별 그룹화
+```{r}
+library(multcomp)
+tuk.hsd <- glht(model = st.aov, linfct = mcp(Clap = 'Tukey'))
+plot(cld(tuk.hsd, level = 0.05), col = 'orange')
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+  - 정규성 미만족 시 이상치 탐색
+```{r}
+outlierTest(st.aov)
+```
+
+
+
+### 이원분산분석
+```{r}
+st.aov <- aov(Height ~ Sex * Clap, data = df)
+summary(st.aov)
+```
+
+
+
+##### 사후분석
+- 다중비교
+각 집단평균과 전체평균의 차이
+```{r}
+model.tables(st.aov, type = 'effects')
+```
+
+```{r}
+boxplot(Height ~ Sex * Clap, data = df,
+        col = c('deeppink', 'yellowgreen'), las=1,
+        main ='Height of Students')
+```
+
+- 상호작용도표
+```{r}
+interaction.plot(x.factor = df$Clap, trace.factor = df$Sex,
+                 response = df$Height, las = 1, type = 'b', pch = c(1,19),
+                 col = c('blue', 'red'))
+```
+
+```{r}
+library(gplots)
+plotmeans(Height ~ interaction(Sex, Clap, sep = ' '), data = df, 
+          connect = list(c(1,3,5), c(2,4,6)),
+          col = c('blue', 'red'))
+```
+
+```{r}
+coplot(Height ~ Clap | Sex, data = df,
+       col = 'steelblue', pch = 19,
+       panel = panel.smooth, lwd = 2, col.smooth = 'darkorange')
+```
+
+```{r}
+library(HH)
+interaction2wt(Height ~ Sex * Clap, data = df)
+```
+
+
+## Chi-Squred Test
+  - 범주형 변수 간의 관련성 검정
+
+- 교차표 (사실 각 셀이 5보다 커야 좋음)
+```{r}
+library(gmodels)
+ct<-CrossTable(x=df$Sex, y=df$Smoke)
+ct <- ct$t
+ct
+```
+
+- 검정통계량 : ( 실제 빈도수 - 기대 빈도수 )^2 / 기대 빈도수 총합
+
+
+### 독립성검정
+- 두 범주형 변수가 서로 독립인지 검정
+```{r}
+
+chisq.test(ct)
+# 교차표 없이 분석
+with(df, chisq.test(Smoke, Sex))
+```
+```{r}
+library(vcd)
+assocstats(ct)
+mosaic(~Sex + Smoke , data = df, shade = T, legend = T)
+```
+
+### 적합성검정
+- 하나의 범주형 변수내 비율 분포에 대한 검정
+```{r}
+# 귀무 : df 자료 내 흡연 비율이 같다
+chisq.test(table(df$Smoke))
+```
+
+```{r}
+# 귀무 : df 자료 내 남녀 비율 3:2 이다
+chisq.test(table(df$Sex), p = c(0.4,0.6))
+```
+
+
+
+
+
+
+
+
