@@ -128,8 +128,50 @@ interaction2wt(Height ~ Sex * Clap, data = df)
 ```
 
 
+## Chi-Squred Test
+  - 범주형 변수 간의 관련성 검정
 
-```{r pressure, echo=FALSE}
+- 교차표 (사실 각 셀이 5보다 커야 좋음)
+```{r}
+library(gmodels)
+ct<-CrossTable(x=df$Sex, y=df$Smoke)
+ct <- ct$t
+ct
 ```
+
+- 검정통계량 : ( 실제 빈도수 - 기대 빈도수 )^2 / 기대 빈도수 총합
+
+
+### 독립성검정
+- 두 범주형 변수가 서로 독립인지 검정
+```{r}
+
+chisq.test(ct)
+# 교차표 없이 분석
+with(df, chisq.test(Smoke, Sex))
+```
+```{r}
+library(vcd)
+assocstats(ct)
+mosaic(~Sex + Smoke , data = df, shade = T, legend = T)
+```
+
+### 적합성검정
+- 하나의 범주형 변수내 비율 분포에 대한 검정
+```{r}
+# 귀무 : df 자료 내 흡연 비율이 같다
+chisq.test(table(df$Smoke))
+```
+
+```{r}
+# 귀무 : df 자료 내 남녀 비율 3:2 이다
+chisq.test(table(df$Sex), p = c(0.4,0.6))
+```
+
+
+
+
+
+
 
 
