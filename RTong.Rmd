@@ -354,7 +354,6 @@ plot(Ozone~Temp,data=df,col='yellowgreen',pch=19)
 abline(model,col='red',lwd=2)
 ```
 
-- 
 
 ### 다중회귀분석
 #### 변수선택법(전진선택법)
@@ -373,7 +372,128 @@ summary(model_final)
 plot(Ozone ~ Temp + Wind + Solar.R + Month,data=df)
 ```
 
-#### 상관계수로 내가 정해본 회귀분석
-- 
+### 다항 회귀분석
+```{r}
+library(car)
+scatterplotMatrix(df[,1:4], pch = 19,col = 'lightgray', cex = 1.2,
+                  regLine = list(method = lm, lty = 1, 
+                                 lwd = 3,col = 'salmon'),
+                  smooth=list(smoother = loessLine, spread =F,
+                              lty.smooth = 1, lwd.smooth = 3,
+                              col.smooth = 'forestgreen'))
+```
+- Ozone, Wind 간의 이차곡선 처럼 보이는 분포 확인
+
+```{r}
+model <- lm(Ozone~ I(Wind^2)+Wind, data = df)
+summary(model)
+```
+```{r}
+plot(Ozone~ Wind, data = df, pch = 19, col = 'lightgreen')
+
+library(dplyr)
+with(df, lines(arrange(data.frame(df$Wind, fitted(model)),
+                       df$Wind),
+               lty = 1, lwd = 3, col = 'orange'
+               ))
+```
+
+## 회귀모형의 설명력 판단
+#### 회귀모형의 기본 전제 조건
+- 선형성 : 독립 변수와 종속변수 간의 선형관계가 존재  Residuals vs Fitted
+
+- 정규성 : 종속변수는 정규분포를 따른다  qqplot(), shapiro.test()
+
+- 등분산성 : 종속변수 값들의 분포는 모두 동일한 분산을 가진다  Scale-Location Plot
+
+- 독립성 : 모든 독립변수의 관측값들은 서로 독립  car::vif()
+
+- + alpha 잔차의 독립성
+
+### 결정계수 R-squred 
+- 변수들과 종속변수 간에 선형관계의 정도를 설명
+- 다중/다항 회귀에서는 adjusted R^2를 사용
+```{r}
+summary(model)
+```
+
+### AIC 
+- 모델의 적합도와 파라미터 수를 고려, 적을 수록 적합
+```{r}
+AIC(model)
+```
+
+## 일반화 회귀모형 Generalized Linear Model
+- 정규분포를 따르지 않는 결과변수에 대한 회귀모델
+- 최대 우도법(MLE) 이용 회귀 계수 추정  
+
+  
+### 이항 로지스틱 회귀모형
+- 결과변수가 이분형 범주일 때 특정 사건이 발생할 확률 추정
+- link func : ln(p / 1-p) = a + b1 X x1 + b2 X x2...
+- odds = p / 1-p
+
+```{r}
+e <- exp(1)
+z <- seq(-6,6, length = 200)
+p<- 1/(1+e^(-z))
+plot(z, p, type = 'l', col = 'tomato', main = '로지스틱 회귀 곡선')
+```
 
 
+```{r}
+library(MASS)
+df<- na.omit(survey[,c('Sex','Height')])
+df$Sex <- ifelse(df$Sex == 'Male', 1, 0)
+model<- glm(Sex ~ Height, data = df, family = binomial(link = 'logit'))
+model
+```
+- 오즈비 odds ratio
+  - 다른 독립변수가 동일하다는 가정 하에서 
+  - 특정 독립변수 한 단위 증가에 따른 사건 발생확률 대 미 발생확률 비율의 변화율
+```{r}
+exp(coef(model))
+```
+키가 1단위 증가하면 오즈비 (남성일 확률/ 여성일 확률)가 1.29% 증가
+
+
+#### 로지스틱 모형을 통한 예측
+```{r}
+pr <- predict(model, newdata = data.frame(list(Height = df$Height)), type = 'response')
+
+cat(
+head(df$Height, 5),'\n',
+head(pr,5))
+
+```
+#### 예측 결과에 대한 혼동행렬
+```{r}
+table(df$Sex, pr>0.5 , dnn = c('real', 'Predicted'))
+```
+
+- 혼동행렬
+  - 정확도 : Accuracy = (TP + TN)/(TP + TN + FP + FN)
+  - 정밀도 : Precision = (TP)/(TP + FP)
+  - 재현율 : Recall = (TP)/(TP + FN)
+  - f1-Score : F1 = 2 X (Precision X Recall)/(Precision + Recall)
+  
+#### 혼동행렬에서의 ROC 곡선, AUC
+- ROC : 혼동행렬에서 FP 비율과 TP 비율의 관계
+- AUC : ROC 곡선의 하부 면적
+```{r}
+library(pROC)
+prf <- roc(df$Sex, pr)
+plot.roc(prf)
+prf$auc
+```
+  
+  
+## 다항로지스틱 회귀분석
+- 세 개 이상의 사건을 갖는 결과변수의 사건 발생확률 예측
+- ln(p_k / 1-p) = a_k + b1_k X x1 + b2_k X x2...
+- p_k = (e^z X k)/(1+ sum(e^z X i) )
+```{r}
+df<- na.omit(survey)
+library(VGAM)
+vglm(Smoke ~ Age+Sex, data = df , family = multinomial())
+```
