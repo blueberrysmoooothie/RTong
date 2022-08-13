@@ -80,16 +80,3 @@ summary(model_final)
 
 plot(Ozone ~ Temp + Wind + Solar.R + Month,data=df)
 ```
-
-## 상관계수로 내가 정해본 회귀분석
-- 
-
-
-
-
-
-
-
-
-
-
