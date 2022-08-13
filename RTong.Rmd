@@ -1,0 +1,379 @@
+---
+title: "RTong"
+author: "hansu"
+date: "2022-08-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+df <- na.omit(survey)
+str(df)
+```
+
+
+```{r}
+hist(df$Age, col='tomato')   # 연령의 분포 살펴보기
+```
+
+## 평균에 대한 검정 - t검정 
+
+### 일표본 t검정(양측검정)
+H0 : 학생들의 평균 나이가 23살이다.  
+H1 : 학생들의 평균 나이가 23살이 아니다.
+
+```{r}
+t.test(df$Age, mu=23)
+```
+
+학생들의 평균 나이는 20.4세이고,  
+검정통계량 t = -5.4539이고 p-value 1.749e-07이므로 유의수준 0.05에서 귀무가설을 기각한다.  
+따라서 학생들의 평균 나이가 23살이 아니라고 할 수 있다.
+
+
+
+
+### 일표본 t검정(단측검정)
+H0 : 학생들의 평균 나이가 21살보다 작거나 같다.  
+H1 : 학생들의 평균 나이가 21살보다 크다.
+
+```{r}
+t.test(df$Age, mu=21, alternative='greater')
+```
+학생들의 평균 나이는 20.4세이고,  
+검정통계량 t = -1.2037이고 p-value=0.8848이므로 유의수준 0.05에서 귀무가설을 기각하지 못한다.  
+따라서 학생들의 평균 나이가 21살보다 작거나 같다고 할 수 있다.  
+
+
+### 일표본 t검정(단측검정)
+H0 : 학생들의 평균 나이가 21살보다 크거나 같다.  
+H1 : 학생들의 평균 나이가 21살보다 작다.  
+
+```{r}
+t.test(df$Age, mu=21, alternative='less')
+```
+
+학생들의 평균 나이는 20.4세이고,  
+검정통계량 t = -1.2037이고 p-value=0.1152이므로 유의수준 0.05에서 귀무가설을 기각한다.  
+따라서 학생들의 평균 나이가 21살보다 작다고 할 수 있다.  
+
+
+### 독립표본 t검정
+
+독립표본 t검정은 두 집단 간에 평균 차이가 있는지를 검정할 때 사용.  
+
+독립표본 t검정에서 ~ 앞에는 검정하고자 하는 종속변수 지정, ~ 뒤에는 집단을 나타내는 독립변수를 지정한다.  
+또한 집단을 나타내는 독립변수는 팩터 형식이어야 한다.  
+
+H0 : 성별에 따라서 연령에 차이가 없다.  
+H1 : 성별에 따라서 연령에 차이가 있다.  
+
+```{r}
+t.test(Age~Sex, data=df)
+```
+
+검정통계량 t = -0.67983, p-value 0.4977이므로 유의수준 0.05에서 귀무가설을 기각하지 못한다.  
+따라서 성별에 따라 연령에 차이가 없다.
+
+```{r}
+par(mfrow=c(1, 2))
+barplot(table(df[df$Sex=='Female', 'Age']), col='tomato', main='Female')
+barplot(table(df[df$Sex=='Male', 'Age']), col='skyblue', main='Male')
+
+# 한 그래프 안에.. p.55처럼 그릴 수 있는 방법을 찾아보기
+```
+
+
+
+### 대응표본 t검정
+같은 대상에게서 추출된 두 개의 데이터가 있을 때(ex : 사전-사후, 왼손-오른손) 사용  
+
+데이터셋 : sleep  
+- 10명의 실험 대상자에게 두 종류의 수면제를 복용하게 한 후 수면제를 복용했을 때의 수면시간과 복용하지 않았을때의 수면시간의 차이를 기록.  
+
+H0 : 수면제에 따라 수면시간의 차이가 없다.  
+H1 : 수면제에 따라 수면시간의 차이가 있다.  
+
+```{r}
+df<-na.omit(sleep)
+```
+
+```{r}
+str(df)
+```
+
+### 집단별 평균 알아보기
+```{r}
+mean(df[df$group==1, ]$extra)
+```
+
+```{r}
+mean(df[df$group==2, ]$extra)
+```
+
+
+```{r}
+t.test(extra~group, data=sleep, paired=T)
+```
+
+집단1의 평균은 0.75, 집단2의 평균은 2.33으로 두 집단의 평균 차이는 -1.58이고,
+검정통계량 t = -4.0621이고 p-value=0.002833이므로 유의수준 0.05에서 귀무가설을 기각한다.  
+따라서 수면제에 따라 수면시간에 차이가 있다고 할 수 있다.  
+
+### 와이드 포맷의 형태
+하나의 행에 두 수면제에 대한 수면시간이 쌍을 이룬 채 나란히 기록되어 있는 경우에는 포뮬러(~)를 이용하여 인수를 지정하지 못함.  
+
+```{r}
+library(tidyr)  # spread 함수가 tidyr 안에 있음
+sleep.wide<-spread(sleep, key=group, value=extra)
+```
+
+```{r}
+sleep.wide
+```
+이런 형태가 와이드 포맷 형태.
+처음에 본 sleep 데이터는 롱 포맷 형태.
+
+
+```{r}
+t.test(sleep.wide$`1`, sleep.wide$`2`, paired=T)
+```
+
+
+## 분산분석
+- 검정 통계량 : F = 집단 간 분산, 집단 내 분산 비 
+
+### 분산분석의 기본가정
+- 정규성 : 종속변수는 정규분포를 따른다.
+```{r car}
+df <- na.omit(survey)
+library(car)
+qqPlot(df$Height, pch = 19, col='deepskyblue', id = F,
+       main = 'Q-Q Plot')
+shapiro.test(df$Height)
+```
+  
+- 등분산성 : 각 집단의 분포는 모두 동일한 분산을 갖는다.
+```{r}
+leveneTest(Height ~ Clap, data = df)
+bartlett.test(Height ~ Clap, data = df)
+```
+
+  - 등분산 미만족 시
+  
+```{r}
+oneway.test(Height ~ Clap, data = df)
+```
+
+
+### 일원분산분석
+  
+- 분석전 범주별 분포 확인
+```{r}
+library(gplots)
+plotmeans(Height~Clap ,data = df,
+          barcol='tomato', barwidth=3, col='cornflowerblue', lwd=2,
+          main='Height of Students \nwith 95% CI of Mean')
+```
+```{r}
+boxplot(Height~Clap ,data = df, col = 'tomato',
+        main ='Height of Students')
+```
+- anova 생성
+```{r}
+st.aov<-aov(Height~Clap ,data = df,)
+st.aov
+summary(st.aov)
+```
+##### 사후분석
+- 다중비교
+각 집단평균과 전체평균의 차이
+```{r}
+model.tables(st.aov, type = 'effects')
+```
+- Tukey HSD 검정
+```{r}
+st.compare <- TukeyHSD(st.aov)
+plot(st.compare, col = 'blue')
+```
+- 범주별 그룹화
+```{r}
+library(multcomp)
+tuk.hsd <- glht(model = st.aov, linfct = mcp(Clap = 'Tukey'))
+plot(cld(tuk.hsd, level = 0.05), col = 'orange')
+```
+
+  - 정규성 미만족 시 이상치 탐색
+```{r}
+outlierTest(st.aov)
+```
+
+
+
+### 이원분산분석
+```{r}
+st.aov <- aov(Height ~ Sex * Clap, data = df)
+summary(st.aov)
+```
+
+
+
+##### 사후분석
+- 다중비교
+각 집단평균과 전체평균의 차이
+```{r}
+model.tables(st.aov, type = 'effects')
+```
+
+```{r}
+boxplot(Height ~ Sex * Clap, data = df,
+        col = c('deeppink', 'yellowgreen'), las=1,
+        main ='Height of Students')
+```
+
+- 상호작용도표
+```{r}
+interaction.plot(x.factor = df$Clap, trace.factor = df$Sex,
+                 response = df$Height, las = 1, type = 'b', pch = c(1,19),
+                 col = c('blue', 'red'))
+```
+
+```{r}
+library(gplots)
+plotmeans(Height ~ interaction(Sex, Clap, sep = ' '), data = df, 
+          connect = list(c(1,3,5), c(2,4,6)),
+          col = c('blue', 'red'))
+```
+
+```{r}
+coplot(Height ~ Clap | Sex, data = df,
+       col = 'steelblue', pch = 19,
+       panel = panel.smooth, lwd = 2, col.smooth = 'darkorange')
+```
+
+```{r}
+library(HH)
+interaction2wt(Height ~ Sex * Clap, data = df)
+```
+
+
+## Chi-Squred Test
+  - 범주형 변수 간의 관련성 검정
+
+- 교차표 (사실 각 셀이 5보다 커야 좋음)
+```{r}
+library(gmodels)
+ct<-CrossTable(x=df$Sex, y=df$Smoke)
+ct <- ct$t
+ct
+```
+
+- 검정통계량 : ( 실제 빈도수 - 기대 빈도수 )^2 / 기대 빈도수 총합
+
+
+### 독립성검정
+- 두 범주형 변수가 서로 독립인지 검정
+```{r}
+
+chisq.test(ct)
+# 교차표 없이 분석
+with(df, chisq.test(Smoke, Sex))
+```
+```{r}
+library(vcd)
+assocstats(ct)
+mosaic(~Sex + Smoke , data = df, shade = T, legend = T)
+```
+
+### 적합성검정
+- 하나의 범주형 변수내 비율 분포에 대한 검정
+```{r}
+# 귀무 : df 자료 내 흡연 비율이 같다
+chisq.test(table(df$Smoke))
+```
+
+```{r}
+# 귀무 : df 자료 내 남녀 비율 3:2 이다
+chisq.test(table(df$Sex), p = c(0.4,0.6))
+```
+
+
+## 회귀분석
+```{r}
+df<-airquality
+summary(df)
+```
+
+- 각 열의 요약 통계량과 NA의 수를 확인한 결과
+  - Ozone은 37개, Solar.R은 7개 있으므로 NA값을 모두 삭제
+
+```{r}
+df<-na.omit(airquality)
+str(df) # 모두 수치형데이터(연속형)
+class(df) # 데프
+summary(df) # NA값 사라진지 확인
+```
+
+- str()로 모든 열들이 수치형(연속형)인것을 확인
+- class()로 데이터 프레임
+- summary()로 NA 행이 삭제되었는지 확인
+
+```{r}
+library(psych)
+corr.test(df)
+```
+
+- 종속변수Ozone열과 
+- Ozone열과 Wind열과 상관계수가 -0.6
+- Ozone열과 Temp열과 상관계수가 0.7
+
+- Probability values는 유의 수준처럼 0.05보다 작으면 *통계적*으로 유의하다고 할 수 있다.
+
+## Wind와 Ozone 상관계수
+```{r}
+plot(df$Wind,df$Ozone,main='Wind와 Ozone 상관계수',
+     xlab='Wind',ylab='Ozone',col='peru',pch=19)
+```
+
+- 강한 음의 상관이 보임
+
+## Temp와 Ozone 상관계수
+```{r}
+plot(df$Temp,df$Ozone,main='Temp와 Ozone 상관계수',
+     xlab='Temp',ylab='Ozone',col='yellow1',pch=19)
+```
+
+- 강한 양의 상관이 보임
+
+### 단순회귀분석
+#### 상관계수가 가장 높았던 Ozone와 Temp
+```{r}
+model<-lm(Ozone~Temp,data=df)
+plot(Ozone~Temp,data=df,col='yellowgreen',pch=19)
+abline(model,col='red',lwd=2)
+```
+
+- 
+
+### 다중회귀분석
+#### 변수선택법(전진선택법)
+```{r}
+model_up<-lm(Ozone~.,data=df)
+model_lo<-lm(Ozone~1,data=df)
+model<-lm(Temp~.,data=df)
+step(model_lo,scope=list(upper=model_up),direction = 'forward')
+```
+
+#### 변수선택법으로 선택된 변수의 회귀분석
+```{r}
+model_final<-lm(Ozone ~ Temp + Wind + Solar.R + Month,data=df)
+summary(model_final)
+
+plot(Ozone ~ Temp + Wind + Solar.R + Month,data=df)
+```
+
+#### 상관계수로 내가 정해본 회귀분석
+- 
+
+
