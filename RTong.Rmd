@@ -404,11 +404,10 @@ with(df, lines(arrange(data.frame(df$Wind, fitted(model)),
 
 - 정규성 : 종속변수는 정규분포를 따른다  qqplot(), shapiro.test()
 
-- 등분산성 : 종속변수 값들의 분포는 모두 동일한 분산을 가진다  Scale-Location Plot
+- 등분산성 : 종속변수 값들의 분포는 모두 동일한 분산을 가진다    (잔차의 독립성)   Scale-Location Plot  
 
 - 독립성 : 모든 독립변수의 관측값들은 서로 독립  car::vif()
 
-- + alpha 잔차의 독립성
 
 ### 결정계수 R-squred 
 - 변수들과 종속변수 간에 선형관계의 정도를 설명
